@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GameScene, Interactable, GameState } from '../types';
 import { Sparkles, ChevronDown, Hand, Ghost, Eye } from 'lucide-react';
@@ -100,8 +99,9 @@ const SceneRenderer: React.FC<SceneRendererProps> = ({ state, interactables, onI
         style={{ 
             width: `${worldWidthVw}vw`, 
             transform: `translateX(${offsetVw}vw)`,
-            // Slower transition during climax pan for cinematic effect
-            transition: (isMoving && climaxStep === 0) ? 'transform 0.1s linear' : 'transform 1.5s ease-in-out'
+            // Fix: Remove transition during movement to prevent lag/choppiness. 
+            // Only transition for cinematic pans (climax or scene shifts).
+            transition: (isMoving && climaxStep === 0) ? 'none' : 'transform 1.5s ease-in-out'
         }}
       >
         <Road />

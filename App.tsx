@@ -375,7 +375,14 @@ const App: React.FC = () => {
         const now = Date.now();
         const stepDelay = 400; 
         if (now - lastFootstepTime.current > stepDelay) { 
-            audioManager.playFootstep();
+            // Determine surface sound
+            let surface: 'dirt' | 'water' | 'wood' = 'dirt';
+            const scene = currentState.currentScene;
+            if (scene === GameScene.FOREST || scene === GameScene.PATH) surface = 'dirt';
+            else if (scene === GameScene.MEETING || scene === GameScene.SEARCH) surface = 'water';
+            else if (scene === GameScene.TEMPLE || scene === GameScene.CLIMAX) surface = 'wood';
+
+            audioManager.playFootstep(surface);
             lastFootstepTime.current = now;
         }
     } else {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface PlayerProps {
@@ -11,13 +10,15 @@ interface PlayerProps {
 
 const Player: React.FC<PlayerProps> = ({ x, isMoving, isLyingDown, facingDir, holdingItem }) => (
   <div 
-    className={`absolute bottom-20 z-30 transition-all duration-500`}
+    className={`absolute bottom-20 z-30`}
     style={{ 
         left: `${x}%`, 
         // We flip the entire container based on direction
         transform: `translateX(-50%) scaleX(${facingDir}) ${isLyingDown ? 'rotate(90deg) translateY(20px)' : 'rotate(0deg)'}`,
         transformOrigin: 'bottom center',
-        transition: 'left 0.1s linear, transform 0.3s ease-out' // Smooth flip
+        // Fix: Remove 'left' transition when moving to prevent "slushy" feel or stutter.
+        // Keep transform transition for smooth turning.
+        transition: isMoving ? 'transform 0.3s ease-out' : 'left 0.1s linear, transform 0.3s ease-out'
     }}
   >
       <div className={`relative w-16 h-32 ${isMoving && !isLyingDown ? 'animate-walk-bob' : 'animate-drunken-idle'} ${isLyingDown ? 'opacity-0' : 'opacity-100 transition-opacity duration-1000'}`}>

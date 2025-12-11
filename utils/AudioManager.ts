@@ -51,32 +51,78 @@ class AudioManager {
     osc.stop(t + 0.04);
   }
 
-  playFootstep() {
+  playFootstep(surface: 'dirt' | 'water' | 'wood' = 'dirt') {
     if (!this.ctx || this.isMuted) return;
     const t = this.ctx.currentTime;
     
-    // WATER SPLASH SOUND (Walking in flooded water)
-    const bufferSize = this.ctx.sampleRate * 0.4; // Longer for splash decay
+    // Create noise buffer
+    const bufferSize = this.ctx.sampleRate * (surface === 'water' ? 0.4 : 0.1); 
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      // White noise with envelope
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.05));
-    }
+    
+    let lastOut = 0;
 
+    for (let i = 0; i < bufferSize; i++) {
+        // Different noise textures
+        if (surface === 'dirt') {
+            // Browner noise (smoother)
+            const white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = data[i];
+            data[i] *= 3.5; // Compensate gain
+        } else {
+             // White noise
+             data[i] = Math.random() * 2 - 1;
+        }
+        // Envelope
+        data[i] *= Math.exp(-i / (this.ctx.sampleRate * (surface === 'water' ? 0.05 : 0.02)));
+    }
+    
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
 
-    // Filter to simulate water splash texture
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, t);
-    filter.frequency.linearRampToValueAtTime(1200, t + 0.1); // Splash up
-    filter.frequency.exponentialRampToValueAtTime(200, t + 0.3); // Splash down
-
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.6, t);
-    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+    if (surface === 'water') {
+        // WATER SPLASH
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, t);
+        filter.frequency.linearRampToValueAtTime(1200, t + 0.1); // Splash up
+        filter.frequency.exponentialRampToValueAtTime(200, t + 0.3); // Splash down
+        
+        gain.gain.setValueAtTime(0.6, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+    } else if (surface === 'dirt') {
+        // DIRT/FOREST FLOOR (Muffled crunch)
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, t); // Low frequency
+        filter.Q.value = 1;
+
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1); // Short decay
+
+    } else if (surface === 'wood') {
+        // TEMPLE FLOOR (Hollow tap)
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(200, t);
+        filter.Q.value = 5; // Resonant
+
+        gain.gain.setValueAtTime(0.5, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08); // Very short
+        
+        // Add a secondary higher click for wood
+        const clickOsc = this.ctx.createOscillator();
+        clickOsc.frequency.setValueAtTime(1200, t);
+        const clickGain = this.ctx.createGain();
+        clickGain.gain.setValueAtTime(0.05, t);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+        clickOsc.connect(clickGain);
+        clickGain.connect(this.masterGain!);
+        clickOsc.start();
+        clickOsc.stop(t+0.05);
+    }
 
     noise.connect(filter);
     filter.connect(gain);
