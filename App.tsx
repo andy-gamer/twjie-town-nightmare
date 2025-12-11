@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameScene, GameState, DialogueLine, Interactable, Subtitle } from './types';
 import { SCRIPT, SUBTITLES } from './assets/script';
@@ -397,6 +396,24 @@ const App: React.FC = () => {
   // -- Interaction Key Listener --
   useEffect(() => {
       const handler = (e: KeyboardEvent) => {
+          // Debug Keys
+          if (hasStarted && !gameEnded) {
+              if (e.key === '1') transitionToScene(GameScene.FOREST, 5);
+              if (e.key === '2') transitionToScene(GameScene.MEETING, 50);
+              if (e.key === '3') {
+                  setGameState(p => ({...p, flags: {...p.flags, hasMetNineSong: true}}));
+                  transitionToScene(GameScene.SEARCH, 10);
+              }
+              if (e.key === '4') {
+                   setGameState(p => ({...p, flags: {...p.flags, hasMetNineSong: true, hasSeed: true, seedPlanted: true}}));
+                   transitionToScene(GameScene.PATH, 5);
+              }
+              if (e.key === '5') {
+                   setGameState(p => ({...p, flags: {...p.flags, hasMetNineSong: true, hasSeed: true, seedPlanted: true}}));
+                   transitionToScene(GameScene.TEMPLE, 15);
+              }
+          }
+
           if (!hasStarted || gameEnded || showEpilogue) return;
           
           if (e.key.toLowerCase() === 'f') {
@@ -421,7 +438,7 @@ const App: React.FC = () => {
       };
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
-  }, [hasStarted, gameEnded, showEpilogue, handleNextDialogue, handleInteraction, getInteractables, isLyingDown, climaxStep]);
+  }, [hasStarted, gameEnded, showEpilogue, handleNextDialogue, handleInteraction, getInteractables, isLyingDown, climaxStep, transitionToScene]);
 
 
   // -- Logic Triggers --
